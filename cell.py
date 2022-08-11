@@ -1,7 +1,9 @@
+import random
 import pygame
 import numpy as np
 from decimal import Decimal
 from sys import exit
+from random import randint
 
 pygame.init()
 
@@ -9,7 +11,7 @@ WIDTH = 800
 HEIGHT = 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('cell')
-clock = pygame.time.Clock()
+font = pygame.font.Font(None, 24)
 
 
 class Cell(pygame.sprite.Sprite):
@@ -23,10 +25,10 @@ class Cell(pygame.sprite.Sprite):
         self.velocity = np.array(velocity)
         self.radius = radius
         self.click = True
-        self.speed = 1
+        self.speed = Decimal(1)
         self.image = self.frame[0]
         self.rect = self.image.get_rect(center=self.pos.astype(float))
-        self.ratio = Decimal(96 / 100)
+        self.ratio = Decimal(99 / 100)
         self.control = control
         self.update()
 
@@ -39,7 +41,7 @@ class Cell(pygame.sprite.Sprite):
             dr = ((self.ratio).sqrt() - 1) * self.radius
             dv = vec * self.speed
             prop_r = (-2 * self.radius * dr - dr * dr).sqrt()
-            prop_v = self.velocity + -(self.radius + dr) * (self.radius + dr) * dv / (prop_r * prop_r)
+            prop_v = self.velocity + -(self.radius + dr) * (self.radius + dr) * dv / (prop_r * prop_r) / 10
             self.velocity += dv
             self.radius += dr
             cell.add(Cell(self.pos + -vec * (self.radius + prop_r), prop_r, prop_v))
@@ -84,15 +86,15 @@ class Cell(pygame.sprite.Sprite):
                     sprite.radius = d
 
 
-    def destroy(self):
-        if self.radius <= 0:
-            self.kill()
-
-
     def animation(self):
         self.rect.size = (float(self.radius) * 2, float(self.radius) * 2)
         self.rect.center = self.pos.astype(float)
         self.image = pygame.transform.scale(self.frame[0], self.rect.size)
+
+
+    def destroy(self):
+        if self.radius <= 0:
+            self.kill()
 
     
     def update(self):
@@ -104,11 +106,12 @@ class Cell(pygame.sprite.Sprite):
         self.destroy()
 
 
-from random import randint
+clock = pygame.time.Clock()
+dt = 0
 cell = pygame.sprite.Group()
 cell.add(Cell((WIDTH / 2, HEIGHT / 2), 40, control=True))
-for i in range(20):
-    cell.add(Cell((randint(0, WIDTH), randint(0, HEIGHT)), randint(1, 40), (0, 0)))
+for i in range(1000):
+    cell.add(Cell((randint(0, WIDTH), randint(0, HEIGHT)), 1, (0, 0)))
 
 while True:
     for event in pygame.event.get():
@@ -117,8 +120,10 @@ while True:
             exit()
 
     screen.fill(0)
+    dt = clock.tick(60)
+    screen.blit(font.render(f'FPS = {1000 / dt:.2f}', True, 'White'), (0, 0))
+    screen.blit(font.render(f'Count = {len(cell)}', True, 'White'), (0, 20))
     cell.draw(screen)
     cell.update()
 
     pygame.display.update()
-    clock.tick(60)

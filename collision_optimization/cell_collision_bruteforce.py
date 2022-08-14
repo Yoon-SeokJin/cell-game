@@ -1,15 +1,16 @@
+from math import hypot
+import random
 import pygame
 import numpy as np
 from decimal import Decimal
 from sys import exit
-from random import randint, random
+from random import randint
 from pygame.locals import *
 
 pygame.mixer.pre_init(44100, 16, 2, 4096)
 pygame.init()
 WIDTH = 1920
 HEIGHT = 1080
-# screen = pygame.display.set_mode((WIDTH, HEIGHT))
 screen = pygame.display.set_mode((WIDTH, HEIGHT), FULLSCREEN | DOUBLEBUF, 16)
 pygame.display.set_caption('cell')
 pygame.event.set_allowed([QUIT, KEYDOWN, KEYUP])
@@ -107,34 +108,18 @@ clock = pygame.time.Clock()
 dt = 0
 cell = pygame.sprite.Group()
 cell.add(Cell((WIDTH / 2, HEIGHT / 2), 40, control=True))
-for i in range(800):
-    cell.add(Cell((randint(0, WIDTH), randint(0, HEIGHT)), 2, (random() * 2 - 1, random() * 2 - 1)))
+for i in range(1000):
+    cell.add(Cell((randint(0, WIDTH), randint(0, HEIGHT)), 1, (0, 0)))
 
 
 def get_collision_pair(sprites):
-    tile_width = 30
-    tile_height = 30
-    tile_wcount = WIDTH // tile_width + 1
-    tile_hcount = HEIGHT // tile_height + 1
-    bucket = [[[] for _ in range(tile_wcount)] for _ in range(tile_hcount)]
-    for e in sprites:
-        x1 = int(e.pos[0] - e.radius) // tile_width
-        x2 = int(e.pos[0] + e.radius) // tile_width
-        y1 = int(e.pos[1] - e.radius) // tile_height
-        y2 = int(e.pos[1] + e.radius) // tile_height
-        for x in range(x1, x2 + 1):
-            for y in range(y1, y2 + 1):
-                bucket[y][x].append(e)
     pairs = []
-    for row in bucket:
-        for items in row:
-            n = len(items)
-            for i in range(n):
-                for j in range(n):
-                    pairs.append((items[i], items[j]))
+    for i in sprites:
+        for j in sprites:
+            if i is not j and i.collision(j):
+                pairs.append((i, j))
     return pairs
 
-fps_list = []
 
 while 1:
     for event in pygame.event.get():
@@ -144,16 +129,8 @@ while 1:
 
     screen.fill(0)
     dt = clock.tick(60)
-    fps = 1000 / dt
-    fps_list.append(fps)
-    if len(fps_list) > 60:
-        fps_list.pop(0)
-    fps_min = min(fps_list)
-    fps_avg = sum(fps_list) / 60
-    screen.blit(font.render(f'FPS = {fps:.2f}', True, 'White'), (0, 0))
-    screen.blit(font.render(f'FPS min while 60 = {fps_min:.2f}', True, 'White'), (0, 20))
-    screen.blit(font.render(f'FPS avg while 60 = {fps_avg:.2f}', True, 'White'), (0, 40))
-    screen.blit(font.render(f'Count = {len(cell)}', True, 'White'), (0, 60))
+    screen.blit(font.render(f'FPS = {1000 / dt:.2f}', True, 'White'), (0, 0))
+    screen.blit(font.render(f'Count = {len(cell)}', True, 'White'), (0, 20))
 
     for sprite in cell.sprites():
         if sprite.control:
@@ -161,6 +138,7 @@ while 1:
     for sprite in cell.sprites():
         sprite.motion()
     collision_pair = get_collision_pair(cell.sprites())
+    print(len(collision_pair))
     for i, j in collision_pair:
         i.drain(j)
         j.drain(i)

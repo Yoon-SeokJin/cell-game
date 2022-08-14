@@ -107,8 +107,8 @@ clock = pygame.time.Clock()
 dt = 0
 cell = pygame.sprite.Group()
 cell.add(Cell((WIDTH / 2, HEIGHT / 2), 40, control=True))
-for i in range(800):
-    cell.add(Cell((randint(0, WIDTH), randint(0, HEIGHT)), 2, (random() * 2 - 1, random() * 2 - 1)))
+for i in range(1000):
+    cell.add(Cell((randint(0, WIDTH), randint(0, HEIGHT)), 4))
 
 
 def get_collision_pair(sprites):

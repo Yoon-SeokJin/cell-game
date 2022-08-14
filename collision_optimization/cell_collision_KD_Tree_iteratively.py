@@ -1,3 +1,4 @@
+from logging import exception
 import pygame
 import numpy as np
 from decimal import Decimal
@@ -68,28 +69,21 @@ class Cell(pygame.sprite.Sprite):
             self.pos[1] = HEIGHT * 2 - self.pos[1] - self.radius * 2
 
 
-    def collision(self, other):
-        dpos = other.pos - self.pos
-        k = (dpos[0] * dpos[0] + dpos[1] * dpos[1]).sqrt()
-        a = self.radius
-        b = other.radius
-        return k < a + b
-
-
     def drain(self, other):
-        if other is not self and other.radius < self.radius and self.collision(other):
+        if other is not self and other.radius < self.radius:
             dpos = other.pos - self.pos
             k = (dpos[0] * dpos[0] + dpos[1] * dpos[1]).sqrt()
             a = self.radius
             b = other.radius
-            c = (k + (2 * a * a + 2 * b * b - k * k).sqrt()) / 2
-            d = k - c
-            if k < c:
-                c = (a * a + b * b).sqrt()
-                d = 0
-            self.velocity = (a * a * self.velocity + (c * c - a * a) * other.velocity) / (c * c)
-            self.radius = c
-            other.radius = d
+            if k < a + b:
+                c = (k + (2 * a * a + 2 * b * b - k * k).sqrt()) / 2
+                d = k - c
+                if k < c:
+                    c = (a * a + b * b).sqrt()
+                    d = 0
+                self.velocity = (a * a * self.velocity + (c * c - a * a) * other.velocity) / (c * c)
+                self.radius = c
+                other.radius = d
 
 
     def animation(self):
@@ -107,31 +101,36 @@ clock = pygame.time.Clock()
 dt = 0
 cell = pygame.sprite.Group()
 cell.add(Cell((WIDTH / 2, HEIGHT / 2), 40, control=True))
-for i in range(800):
+for i in range(1000):
     cell.add(Cell((randint(0, WIDTH), randint(0, HEIGHT)), 2, (random() * 2 - 1, random() * 2 - 1)))
 
 
-def get_collision_pair(sprites):
-    tile_width = 30
-    tile_height = 30
-    tile_wcount = WIDTH // tile_width + 1
-    tile_hcount = HEIGHT // tile_height + 1
-    bucket = [[[] for _ in range(tile_wcount)] for _ in range(tile_hcount)]
-    for e in sprites:
-        x1 = int(e.pos[0] - e.radius) // tile_width
-        x2 = int(e.pos[0] + e.radius) // tile_width
-        y1 = int(e.pos[1] - e.radius) // tile_height
-        y2 = int(e.pos[1] + e.radius) // tile_height
-        for x in range(x1, x2 + 1):
-            for y in range(y1, y2 + 1):
-                bucket[y][x].append(e)
+def get_collision_pair(sprites, axis=0):
     pairs = []
-    for row in bucket:
-        for items in row:
-            n = len(items)
-            for i in range(n):
-                for j in range(n):
-                    pairs.append((items[i], items[j]))
+    stack = []
+    stack.append((sprites, 0))
+    while len(stack):
+        sprites, axis = stack[-1]
+        stack.pop(-1)
+        
+        n = len(sprites)
+        if n < 2:
+            continue
+        val = [sprite.pos[axis] for sprite in sprites]
+        idx = np.argpartition(val, n // 2)
+        vl = sprites[idx[n//2 - 1]].pos[axis]
+        vr = sprites[idx[n//2]].pos[axis]
+        lseg = [sprite for sprite in sprites if sprite.pos[axis] - sprite.radius <= vl]
+        rseg = [sprite for sprite in sprites if sprite.pos[axis] + sprite.radius >= vr]
+        if n == len(lseg):
+            pairs += [(lseg[i], lseg[j]) for i in range(n) for j in range(i + 1, n)]
+            continue
+        if n == len(rseg):
+            pairs += [(rseg[i], rseg[j]) for i in range(n) for j in range(i + 1, n)]
+            continue
+        
+        stack.append((lseg, 0 if axis else 1))
+        stack.append((rseg, 0 if axis else 1))
     return pairs
 
 fps_list = []

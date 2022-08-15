@@ -12,10 +12,12 @@ class GamePlayer:
         self.screen = pygame.display.set_mode((Settings.WIDTH, Settings.HEIGHT), FULLSCREEN | DOUBLEBUF, 16)
         self.font = pygame.font.Font(None, 24)
 
-    def play(self):
+
+    def play(self, frame_count=-1):
         clock = pygame.time.Clock()
         dt = 0
-        fps_list = []
+        self.fps_list = []
+        frame_number = 0
         while 1:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -23,13 +25,13 @@ class GamePlayer:
                     exit()
 
             self.screen.fill(0)
-            dt = clock.tick(60)
+            dt = clock.tick(Settings.FPS)
             fps = 1000 / dt
-            fps_list.append(fps)
-            if len(fps_list) > 60:
-                fps_list.pop(0)
-            fps_min = min(fps_list)
-            fps_avg = sum(fps_list) / 60
+            self.fps_list.append(fps)
+            if len(self.fps_list) > 60:
+                self.fps_list.pop(0)
+            fps_min = min(self.fps_list)
+            fps_avg = sum(self.fps_list) / len(self.fps_list)
             self.debug_string = []
             self.debug_string.append(f'FPS = {fps:.2f}')
             self.debug_string.append(f'FPS min while 60 = {fps_min:.2f}')
@@ -41,3 +43,10 @@ class GamePlayer:
                 self.screen.blit(self.font.render(str, True, 'White'), (0, idx * 20))
 
             pygame.display.update()
+
+            if frame_count != -1:
+                if frame_count == frame_number:
+                    pygame.quit()
+                    return
+                else:
+                    frame_number += 1

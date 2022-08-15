@@ -6,8 +6,8 @@ from game_player import GamePlayer
 from random import randint, random
 
 def get_collision_pair(sprites):
-    tile_width = 30
-    tile_height = 30
+    tile_width = 40
+    tile_height = 40
     bucket = {}
     for e in sprites:
         x1 = int(e.pos[0] - e.radius) // tile_width
@@ -24,7 +24,7 @@ def get_collision_pair(sprites):
         for y, items in row.items():
             n = len(items)
             for i in range(n):
-                for j in range(n):
+                for j in range(i + 1, n):
                     pairs.append((items[i], items[j]))
     return pairs
 

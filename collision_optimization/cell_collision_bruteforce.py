@@ -1,8 +1,5 @@
 import pygame
-import numpy as np
-from cell import Cell
-from settings import Settings
-from game_player import GamePlayer
+from common import *
 from random import randint, random
 
 def get_collision_pair(sprites):

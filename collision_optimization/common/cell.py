@@ -1,7 +1,7 @@
 import pygame
 import numpy as np
 from decimal import Decimal
-from settings import Settings
+from .settings import Settings
 
 class Cell(pygame.sprite.Sprite):
     def __init__(self, pos, radius, velocity=(0, 0), control=False):

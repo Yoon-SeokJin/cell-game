@@ -1,6 +1,6 @@
 import pygame
 from pygame.locals import *
-from settings import Settings
+from .settings import Settings
 
 class GamePlayer:
     def __init__(self, step_func):

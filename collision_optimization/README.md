@@ -1,12 +1,12 @@
 ## FPS by Algorithm
 
-### [Source Code](performance_benchmarking.py)
+### [Source Code](FPS_by_Algorithm.py)
 
 ![FPS_by_Algorithm](FPS_by_Algorithm.svg)
 
 ## FPS by Tile Size on Uniform Grid Space Partitioning 
 
-### [Source Code](UGSP_tile_optimization.py)
+### [Source Code](FPS_by_Tile_Size.py)
 
 ![FPS_by_Tile_Size](FPS_by_Tile_Size.svg)
 

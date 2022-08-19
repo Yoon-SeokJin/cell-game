@@ -17,6 +17,20 @@ class Cell:
         self.click = True
 
 
+    def propel(self, cells, pos):
+        vec = self.pos - np.array(pos)
+        vec /= (vec[0] * vec[0] + vec[1] * vec[1]).sqrt()
+        r = self.radius
+        nr = r + (self.ratio ** Decimal(1/3) - 1) * self.radius
+        v = self.velocity
+        nv = v + vec * self.speed
+        prop_r = (r * r * r - nr * nr * nr) ** Decimal(1/3)
+        prop_v = v - (nv - v) * (r * r * r - nr * nr * nr) / (prop_r * prop_r * prop_r)
+        self.radius = nr
+        self.velocity = nv
+        cells.append(Cell(self.pos - vec * (self.radius + prop_r), prop_r, prop_v))
+
+
     def input(self, cells):
         if pygame.mouse.get_pressed()[0] and not self.click:
             self.click = True

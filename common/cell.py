@@ -18,7 +18,7 @@ class Cell:
 
 
     def propel(self, cells, pos):
-        vec = self.pos - np.array(pos)
+        vec = self.pos - np.array([Decimal(pos[0]), Decimal(pos[1])])
         vec /= (vec[0] * vec[0] + vec[1] * vec[1]).sqrt()
         r = self.radius
         nr = r + (self.ratio ** Decimal(1/3) - 1) * self.radius

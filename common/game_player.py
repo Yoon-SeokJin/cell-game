@@ -18,7 +18,7 @@ class Renderer:
         self.lazy_init_complete = True
 
 
-    def __call__(self, step, *args, **kwargs):
+    def __call__(self, step):
         def inner(f_self, *args, **kwargs):
             if not self.lazy_init_complete:
                 self.lazy_init()

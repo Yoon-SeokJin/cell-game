@@ -168,8 +168,9 @@ def play_multiple_episodes(env, n_episodes, n_max_steps, model, loss_fn):
         for step in range(n_max_steps):
             obs, reward, done, grads = play_one_step(env, obs, model, loss_fn)
             env.render()
-            current_rewards.append(reward)
-            current_grads.append(grads)
+            if not Settings.NO_GRAD:
+                current_rewards.append(reward)
+                current_grads.append(grads)
             if done:
                 break
         all_rewards.append(current_rewards)
@@ -225,11 +226,12 @@ if __name__ == '__main__':
 
     for iteration in tqdm(range(n_iterations)):
         all_rewards, all_grads = play_multiple_episodes(env, n_episodes_per_update, n_max_steps, model, loss_fn)
-        all_final_rewards = discount_and_normalize_rewards(all_rewards, discount_factor)
-        all_mean_grads = []
-        for var_index in range(len(model.trainable_variables)):
-            mean_grads = tf.reduce_mean([final_reward * all_grads[episode_index][step][var_index]
-            for episode_index, final_rewards in enumerate(all_final_rewards)for step, final_reward in enumerate(final_rewards)], axis=0)
-            all_mean_grads.append(mean_grads)
-        optimizer.apply_gradients(zip(all_mean_grads, model.trainable_variables))
-        model.save_weights(save_path)
+        if not Settings.NO_GRAD:
+            all_final_rewards = discount_and_normalize_rewards(all_rewards, discount_factor)
+            all_mean_grads = []
+            for var_index in range(len(model.trainable_variables)):
+                mean_grads = tf.reduce_mean([final_reward * all_grads[episode_index][step][var_index]
+                for episode_index, final_rewards in enumerate(all_final_rewards)for step, final_reward in enumerate(final_rewards)], axis=0)
+                all_mean_grads.append(mean_grads)
+            optimizer.apply_gradients(zip(all_mean_grads, model.trainable_variables))
+            model.save_weights(save_path)

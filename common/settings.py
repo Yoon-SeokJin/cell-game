@@ -3,4 +3,5 @@ class Settings:
     HEIGHT = 720
     FPS = 60
     SPEED = 0.5
-    RENDERING = True
+    RENDERING = False
+    NO_GRAD = False

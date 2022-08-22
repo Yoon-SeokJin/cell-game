@@ -19,8 +19,6 @@ class Renderer:
 
 
     def __call__(self, step):
-        if not Settings.RENDERING:
-            return lambda *args, **kwargs: None
         def inner(f_self, *args, **kwargs):
             if not self.lazy_init_complete:
                 self.lazy_init()

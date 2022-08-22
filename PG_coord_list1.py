@@ -1,11 +1,11 @@
 import pygame
 import numpy as np
 from common import *
-from random import randint, random
+from random import randint
 import tensorflow as tf
 from tensorflow import keras
 from tqdm import tqdm
-import sys
+import os
 
 class Environment:
     def reset(self):
@@ -168,7 +168,8 @@ def play_multiple_episodes(env, n_episodes, n_max_steps, model, loss_fn):
         obs = env.reset()
         for step in range(n_max_steps):
             obs, reward, done, grads = play_one_step(env, obs, model, loss_fn)
-            env.render()
+            if Settings.RENDERING:
+                env.render()
             if not Settings.NO_GRAD:
                 current_rewards.append(reward)
                 current_grads.append(grads)
@@ -195,7 +196,11 @@ def discount_and_normalize_rewards(all_rewards, discount_factor):
 
 
 if __name__ == '__main__':
-    running_in_COLAB = 'google.colab' in sys.modules
+    try:
+        import google.colab
+        running_in_COLAB = True
+    except:
+        running_in_COLAB = False
     if not running_in_COLAB:
         gpus = tf.config.experimental.list_physical_devices('GPU')
         if gpus:
@@ -209,9 +214,10 @@ if __name__ == '__main__':
         Settings.RENDERING = False # Google colab can't display graphic panel.
         Settings.NO_GRAD = False
     
-    file_name = 'PG_coord_list1_0'
-    load_path = 'tmp_weight\\PG_coord_list1\\' + file_name
-    save_path = 'tmp_weight\\PG_coord_list1\\' + file_name
+    detail_name = 'PG_coord_list1_0'
+    file_path = os.path.join('tmp_weight', 'PG_coord_list1')
+    load_path = os.path.join(file_path, detail_name)
+    save_path = os.path.join(file_path, detail_name)
 
     model = keras.Sequential([
         keras.layers.InputLayer((301,)),
@@ -222,7 +228,8 @@ if __name__ == '__main__':
         keras.layers.Dense(100, activation='elu'),
         keras.layers.Dense(9),
     ])
-    model.load_weights(load_path)
+    if os.path.exists(load_path + '.index'):
+        model.load_weights(load_path)
     loss_fn = keras.losses.binary_crossentropy
     env = Environment()
     obs = env.reset()
@@ -249,6 +256,7 @@ if __name__ == '__main__':
     if running_in_COLAB:
         from google.colab import files
         from glob import glob
-        paths = glob(save_path + '*')
+        
+        paths = glob(os.path.join(save_path, '*'))
         for path in paths:
             files.download(path)

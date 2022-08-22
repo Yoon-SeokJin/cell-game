@@ -2,5 +2,4 @@ pandas
 numpy
 scipy
 tensorflow
-python==3.9.7
 pygame

@@ -5,6 +5,7 @@ from random import randint, random
 import tensorflow as tf
 from tensorflow import keras
 from tqdm import tqdm
+import sys
 
 class Environment:
     def reset(self):
@@ -155,7 +156,7 @@ def play_one_step(env, obs, model, loss_fn):
         rad = (direction - 1) * 2 * np.pi / 8
         click_coord = np.array([np.cos(rad), np.sin(rad)]) + np.array([obs[1], obs[2]])
     obs, reward, done = env.step(click_coord)
-    return obs, reward, done, grads
+    return obs, reward ** 3, done, grads
 
 
 def play_multiple_episodes(env, n_episodes, n_max_steps, model, loss_fn):
@@ -194,14 +195,23 @@ def discount_and_normalize_rewards(all_rewards, discount_factor):
 
 
 if __name__ == '__main__':
-    gpus = tf.config.experimental.list_physical_devices('GPU')
-    if gpus:
-        try:
-            tf.config.experimental.set_virtual_device_configuration(gpus[0], [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=1024)])
-        except RuntimeError as e:
-            print(e)
-    load_path = 'PG_coord_list1_0'
-    save_path = 'PG_coord_list1_0'
+    running_in_COLAB = 'google.colab' in sys.modules
+    if not running_in_COLAB:
+        gpus = tf.config.experimental.list_physical_devices('GPU')
+        if gpus:
+            try:
+                tf.config.experimental.set_virtual_device_configuration(gpus[0], [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=512)])
+            except RuntimeError as e:
+                print(e)
+        Settings.RENDERING = True
+        Settings.NO_GRAD = True # My local gpu is too poor to calculate gradient.
+    else:
+        Settings.RENDERING = False # Google colab can't display graphic panel.
+        Settings.NO_GRAD = False
+    
+    file_name = 'PG_coord_list1_0'
+    load_path = 'tmp_weight\\PG_coord_list1\\' + file_name
+    save_path = 'tmp_weight\\PG_coord_list1\\' + file_name
 
     model = keras.Sequential([
         keras.layers.InputLayer((301,)),
@@ -212,7 +222,7 @@ if __name__ == '__main__':
         keras.layers.Dense(100, activation='elu'),
         keras.layers.Dense(9),
     ])
-    # model.load_weights(load_path)
+    model.load_weights(load_path)
     loss_fn = keras.losses.binary_crossentropy
     env = Environment()
     obs = env.reset()
@@ -235,3 +245,10 @@ if __name__ == '__main__':
                 all_mean_grads.append(mean_grads)
             optimizer.apply_gradients(zip(all_mean_grads, model.trainable_variables))
             model.save_weights(save_path)
+
+    if running_in_COLAB:
+        from google.colab import files
+        from glob import glob
+        paths = glob(save_path + '*')
+        for path in paths:
+            files.download(path)

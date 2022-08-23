@@ -6,10 +6,12 @@ import tensorflow as tf
 from tensorflow import keras
 from tqdm import tqdm
 import os
+import argparse
 
 class Environment:
     def reset(self):
-        radius_list = [70, 70, 70]
+        radius_list = [70]
+        # radius_list = [70, 70, 70]
         # radius_list = np.geomspace(10, 100, 100)
         # radius_list = np.concatenate([
         #     np.ones(shape=8) * 100,
@@ -29,7 +31,8 @@ class Environment:
 
 
     def step(self, action):
-        if isinstance(action, np.ndarray):
+        self.clicked = isinstance(action, np.ndarray) 
+        if self.clicked:
             self.cells[0].propel(self.cells, action)
         for sprite in self.cells:
             sprite.motion()
@@ -213,11 +216,21 @@ if __name__ == '__main__':
     else:
         Settings.RENDERING = False # Google colab can't display graphic panel.
         Settings.NO_GRAD = False
-    
-    detail_name = 'PG_coord_list1_0'
-    file_path = os.path.join('tmp_weight', 'PG_coord_list1')
-    load_path = os.path.join(file_path, detail_name)
-    save_path = os.path.join(file_path, detail_name)
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--load_path', default='', help='load path when resume training.')
+    parser.add_argument('--save_path', default='', help='save path.')
+    parser.add_argument('--name', default='default', help='detail name used by finding load or save model in specified path.')
+
+    load_path = parser.parse_args().load_path
+    save_path = parser.parse_args().save_path
+    detail_name = parser.parse_args().name
+
+    do_load = load_path != ''
+    do_save = save_path != ''
+
+    load_path = os.path.join(load_path, detail_name)
+    save_path = os.path.join(save_path, detail_name)
 
     model = keras.Sequential([
         keras.layers.InputLayer((301,)),
@@ -228,7 +241,7 @@ if __name__ == '__main__':
         keras.layers.Dense(100, activation='elu'),
         keras.layers.Dense(9),
     ])
-    if os.path.exists(load_path + '.index'):
+    if do_load and os.path.exists(load_path + '.index'):
         model.load_weights(load_path)
     loss_fn = keras.losses.binary_crossentropy
     env = Environment()
@@ -251,12 +264,5 @@ if __name__ == '__main__':
                 for episode_index, final_rewards in enumerate(all_final_rewards)for step, final_reward in enumerate(final_rewards)], axis=0)
                 all_mean_grads.append(mean_grads)
             optimizer.apply_gradients(zip(all_mean_grads, model.trainable_variables))
-            model.save_weights(save_path)
-
-    if running_in_COLAB:
-        from google.colab import files
-        from glob import glob
-        
-        paths = glob(os.path.join(save_path, '*'))
-        for path in paths:
-            files.download(path)
+            if do_save:
+                model.save_weights(save_path)

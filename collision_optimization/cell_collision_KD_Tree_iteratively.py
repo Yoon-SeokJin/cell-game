@@ -3,10 +3,10 @@ import numpy as np
 from common import *
 from random import randint, random
 
-def get_collision_pair(sprites, axis=0):
+def _get_collision_pair(self, axis=0):
     pairs = []
     stack = []
-    stack.append((sprites, 0))
+    stack.append((self.cells, 0))
     while len(stack):
         sprites, axis = stack[-1]
         stack.pop(-1)
@@ -31,30 +31,17 @@ def get_collision_pair(sprites, axis=0):
         stack.append((rseg, 0 if axis else 1))
     return pairs
 
-def step_func(self):
-    self.debug_string.append(f'Count = {len(cell)}')
-
-    for sprite in cell.sprites():
-        if sprite.control:
-            sprite.input(cell)
-    for sprite in cell.sprites():
-        sprite.motion()
-    collision_pair = get_collision_pair(cell.sprites())
-    for i, j in collision_pair:
-        i.drain(j)
-        j.drain(i)
-    for sprite in cell.sprites():
-        sprite.animation()
-        sprite.destroy()
-
-    cell.draw(self.screen)
 
 if __name__ == '__main__':
-    game_player = GamePlayer(step_func)
-
-    cell = pygame.sprite.Group()
-    cell.add(Cell((Settings.WIDTH / 2, Settings.HEIGHT / 2), 40, control=True))
-    for i in range(1000):
-        cell.add(Cell((randint(0, Settings.WIDTH), randint(0, Settings.HEIGHT)), 2, (random() * 2 - 1, random() * 2 - 1)))
-
-    game_player.play()
+    Environment._get_collision_pair = _get_collision_pair
+    env = Environment()
+    env.reset()
+    env.render()
+    while True:
+        if pygame.mouse.get_pressed()[0]:
+            pos = pygame.mouse.get_pos()
+            env.step(np.array(pos, dtype=float))
+        else:
+            env.step(None)
+        if env.render():
+            break

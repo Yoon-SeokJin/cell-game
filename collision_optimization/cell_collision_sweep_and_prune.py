@@ -1,48 +1,36 @@
 import pygame
+import numpy as np
 from common import *
 from random import randint, random
 
-def get_collision_pair(sprites):
-    n = len(sprites)
+def _get_collision_pair(self):
+    n = len(self.cells)
     idx = []
-    idx += [(sprites[i].pos[0] - sprites[i].radius, 1, i) for i in range(n)]
-    idx += [(sprites[i].pos[0] + sprites[i].radius, -1, i) for i in range(n)]
+    idx += [(self.cells[i].pos[0] - self.cells[i].radius, 1, i) for i in range(n)]
+    idx += [(self.cells[i].pos[0] + self.cells[i].radius, -1, i) for i in range(n)]
     sorted(idx)
     pairs = []
     stack = []
     for _, k, i in idx:
         if k == 1:
             for e in stack:
-                pairs.append((sprites[e], sprites[i]))
+                pairs.append((self.cells[e], self.cells[i]))
             stack.append(i)
         else:
             stack.remove(i)
     return pairs
 
-def step_func(self):
-    self.debug_string.append(f'Count = {len(cell)}')
-
-    for sprite in cell.sprites():
-        if sprite.control:
-            sprite.input(cell)
-    for sprite in cell.sprites():
-        sprite.motion()
-    collision_pair = get_collision_pair(cell.sprites())
-    for i, j in collision_pair:
-        i.drain(j)
-        j.drain(i)
-    for sprite in cell.sprites():
-        sprite.animation()
-        sprite.destroy()
-
-    cell.draw(self.screen)
-
+    
 if __name__ == '__main__':
-    game_player = GamePlayer(step_func)
-
-    cell = pygame.sprite.Group()
-    cell.add(Cell((Settings.WIDTH / 2, Settings.HEIGHT / 2), 40, control=True))
-    for i in range(1000):
-        cell.add(Cell((randint(0, Settings.WIDTH), randint(0, Settings.HEIGHT)), 2, (random() * 2 - 1, random() * 2 - 1)))
-
-    game_player.play()
+    Environment._get_collision_pair = _get_collision_pair
+    env = Environment()
+    env.reset()
+    env.render()
+    while True:
+        if pygame.mouse.get_pressed()[0]:
+            pos = pygame.mouse.get_pos()
+            env.step(np.array(pos, dtype=float))
+        else:
+            env.step(None)
+        if env.render():
+            break

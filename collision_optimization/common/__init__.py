@@ -1,5 +1,6 @@
 from .cell import Cell
-from .game_player import GamePlayer
+from .renderer import Renderer
 from .settings import Settings
+from .environment import Environment
 
-__all__ = ['Cell', 'GamePlayer', 'Settings']
+__all__ = ['Cell', 'Renderer', 'Settings', 'Environment']

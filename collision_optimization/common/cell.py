@@ -3,43 +3,36 @@ import numpy as np
 from decimal import Decimal
 from .settings import Settings
 
-class Cell(pygame.sprite.Sprite):
+class Cell:
     def __init__(self, pos, radius, velocity=(0, 0), control=False):
-        super().__init__()
-        self.frame = [pygame.image.load(f'assets/cell{1 if control else 2}.png').convert_alpha()]
         pos = (Decimal(pos[0]), Decimal(pos[1]))
         radius = Decimal(radius)
         velocity = Decimal(velocity[0]), Decimal(velocity[1])
         self.pos = np.array(pos)
         self.velocity = np.array(velocity)
         self.radius = radius
-        self.click = True
         self.speed = Decimal(1)
-        self.image = self.frame[0]
-        self.rect = self.image.get_rect(center=self.pos.astype(float))
-        self.ratio = Decimal(99 / 100)
+        self.ratio = Decimal(0.99)
         self.control = control
-        self.update()
+        self.click = True
 
 
-    def input(self, cell):
-        if pygame.mouse.get_pressed()[0] and not self.click:
-            self.click = True
-            vec = self.pos - pygame.mouse.get_pos()
-            vec /= (vec[0] * vec[0] + vec[1] * vec[1]).sqrt()
-            dr = ((self.ratio).sqrt() - 1) * self.radius
-            dv = vec * self.speed
-            prop_r = (-2 * self.radius * dr - dr * dr).sqrt()
-            prop_v = self.velocity + -(self.radius + dr) * (self.radius + dr) * dv / (prop_r * prop_r) / 10
-            self.velocity += dv
-            self.radius += dr
-            cell.add(Cell(self.pos + -vec * (self.radius + prop_r), prop_r, prop_v))
-        elif not pygame.mouse.get_pressed()[0] and self.click:
-            self.click = False
-    
+    def propel(self, cells, pos):
+        vec = self.pos - np.array([Decimal(pos[0]), Decimal(pos[1])])
+        vec /= (vec[0] * vec[0] + vec[1] * vec[1]).sqrt()
+        r = self.radius
+        nr = r + (self.ratio ** Decimal(1/3) - 1) * self.radius
+        v = self.velocity
+        nv = v + vec * self.speed
+        prop_r = (r * r * r - nr * nr * nr) ** Decimal(1/3)
+        prop_v = v - (nv - v) * (r * r * r - nr * nr * nr) / (prop_r * prop_r * prop_r)
+        self.radius = nr
+        self.velocity = nv
+        cells.append(Cell(self.pos - vec * (self.radius + prop_r), prop_r, prop_v))
+
 
     def motion(self):
-        self.pos += self.velocity
+        self.pos += self.velocity * Decimal(Settings.SPEED)
 
         if self.pos[0] - self.radius < 0:
             self.velocity[0] = -self.velocity[0]
@@ -62,22 +55,11 @@ class Cell(pygame.sprite.Sprite):
             a = self.radius
             b = other.radius
             if k < a + b:
-                c = (k + (2 * a * a + 2 * b * b - k * k).sqrt()) / 2
+                c = ((12 * a * a * a * k + 12 * b * b * b * k - 3 * k * k * k * k).sqrt() + 3 * k * k) / (6 * k)
                 d = k - c
                 if k < c:
-                    c = (a * a + b * b).sqrt()
+                    c = (a * a * a + b * b * b) ** Decimal(1/3)
                     d = 0
-                self.velocity = (a * a * self.velocity + (c * c - a * a) * other.velocity) / (c * c)
+                self.velocity = (a * a * a * self.velocity + (c * c * c - a * a * a) * other.velocity) / (c * c * c)
                 self.radius = c
                 other.radius = d
-
-
-    def animation(self):
-        self.rect.size = (float(self.radius) * 2, float(self.radius) * 2)
-        self.rect.center = self.pos.astype(float)
-        self.image = pygame.transform.scale(self.frame[0], self.rect.size)
-
-
-    def destroy(self):
-        if self.radius <= 0:
-            self.kill()

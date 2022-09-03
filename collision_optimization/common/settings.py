@@ -1,4 +1,7 @@
 class Settings:
-    WIDTH = 1920
-    HEIGHT = 1080
+    WIDTH = 1280
+    HEIGHT = 720
     FPS = 60
+    SPEED = 0.5
+    RENDERING = True
+    NO_GRAD = True

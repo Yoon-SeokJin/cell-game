@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "cell-game"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+
+[tool.poetry.dependencies]
+python = "~3.9"
+pygame = "^2.1.2"
+numpy = "^1.23.2"
+pandas = "^1.4.4"
+tensorflow = "^2.9.1"
+ipykernel = "^6.15.2"
+scipy = "^1.9.1"
+tqdm = "^4.64.0"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
